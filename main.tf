@@ -68,7 +68,7 @@ resource "aws_route_table_association" "public" {
 resource "aws_route_table" "private" {
   vpc_id = aws_vpc.main.id
   tags = {
-    Name = "AWS Private route Table"
+    Name = var.private_route_table_tag
   }
 }
 
