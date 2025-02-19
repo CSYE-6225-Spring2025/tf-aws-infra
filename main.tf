@@ -39,7 +39,7 @@ resource "aws_internet_gateway" "gw" {
   vpc_id = aws_vpc.main.id
 
   tags = {
-    Name = "Internet Gateway"
+    Name = var.internet_gateway
   }
 }
 
@@ -47,7 +47,7 @@ resource "aws_internet_gateway" "gw" {
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
   tags = {
-    Name = "AWS route Table"
+    Name = var.public_route_table
   }
 }
 

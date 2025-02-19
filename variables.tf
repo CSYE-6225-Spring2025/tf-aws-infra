@@ -55,6 +55,17 @@ variable "public_subnet_tag" {
 }
 
 
+variable "internet_gateway" {
+  type    = string
+  default = "Internet Gateway"
+}
+
+variable "public_route_table" {
+  type    = string
+  default = "Public route table"
+}
+
+
 variable "private_subnet_tag" {
   type    = string
   default = "Private Subnet"
