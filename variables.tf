@@ -4,10 +4,10 @@ variable "region" {
   default     = "us-east-1"
 }
 
-variable "profile"{
-  type= string
+variable "profile" {
+  type        = string
   description = "Define the profile"
-  default = "dev"
+  default     = "dev"
 }
 variable "vpc_cidr_block" {
   type        = string
@@ -18,48 +18,48 @@ variable "vpc_cidr_block" {
 variable "tags" {
   type        = map(string)
   description = "Key-value pairs for tagging resources."
-  default     = {
+  default = {
     Project     = "MyProject"
     Environment = "Dev"
   }
 }
 
 variable "vpc_tag" {
-    type = string
-    default = "VPC Demo"
+  type    = string
+  default = "VPC Demo"
 }
 
-variable "availabilityzones_names"{
-    type = list(string)
-    description = "list the availability aones in which the resources should be created"
-    default = ["us-east-1a", "us-east-1b"]
+variable "availabilityzones_names" {
+  type        = list(string)
+  description = "list the availability aones in which the resources should be created"
+  default     = ["us-east-1a", "us-east-1b"]
 }
 
-variable "public_subnets_cidrs"{
-    type = list(string)
-    description = "list the subnet CIDRs"
-    default = ["10.0.1.0/24", "10.0.2.0/24"]
+variable "public_subnets_cidrs" {
+  type        = list(string)
+  description = "list the subnet CIDRs"
+  default     = ["10.0.1.0/24", "10.0.2.0/24"]
 }
 
 
-variable "private_subnets_cidrs"{
-    type = list(string)
-    description = "list the subnet CIDRs"
-    default = ["10.0.3.0/24", "10.0.5.0/24"]
+variable "private_subnets_cidrs" {
+  type        = list(string)
+  description = "list the subnet CIDRs"
+  default     = ["10.0.3.0/24", "10.0.5.0/24"]
 }
 
 
 variable "public_subnet_tag" {
-    type = string
-    default = "Public Subnet"
+  type    = string
+  default = "Public Subnet"
 }
 
 
 variable "private_subnet_tag" {
-    type = string
-    default = "Private Subnet"
+  type    = string
+  default = "Private Subnet"
 }
 variable "destination_cidr_block" {
-  type = string
+  type    = string
   default = "0.0.0.0/0"
 }
