@@ -19,7 +19,7 @@ resource "aws_subnet" "public" {
   availability_zone       = var.availabilityzones_names[count.index]
   map_public_ip_on_launch = true
   tags = {
-    Name = "var.public_subnet_tag-${count.index}"
+    Name = "public_subnet_tag-${count.index}"
   }
 }
 
@@ -30,7 +30,7 @@ resource "aws_subnet" "private" {
   cidr_block        = var.private_subnets_cidrs[count.index]
   availability_zone = var.availabilityzones_names[count.index]
   tags = {
-    Name = "var.private_subnet_tag-${count.index}"
+    Name = "private_subnet_tag-${count.index}"
   }
 }
 
