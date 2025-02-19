@@ -1,0 +1,65 @@
+variable "region" {
+  type        = string
+  description = "The AWS region where resources will be created."
+  default     = "us-east-1"
+}
+
+variable "profile"{
+  type= string
+  description = "Define the profile"
+  default = "dev"
+}
+variable "vpc_cidr_block" {
+  type        = string
+  description = "CIDR block for the VPC."
+  default     = "10.0.0.0/16"
+}
+
+variable "tags" {
+  type        = map(string)
+  description = "Key-value pairs for tagging resources."
+  default     = {
+    Project     = "MyProject"
+    Environment = "Dev"
+  }
+}
+
+variable "vpc_tag" {
+    type = string
+    default = "VPC Demo"
+}
+
+variable "availabilityzones_names"{
+    type = list(string)
+    description = "list the availability aones in which the resources should be created"
+    default = ["us-east-1a", "us-east-1b"]
+}
+
+variable "public_subnets_cidrs"{
+    type = list(string)
+    description = "list the subnet CIDRs"
+    default = ["10.0.1.0/24", "10.0.2.0/24"]
+}
+
+
+variable "private_subnets_cidrs"{
+    type = list(string)
+    description = "list the subnet CIDRs"
+    default = ["10.0.3.0/24", "10.0.5.0/24"]
+}
+
+
+variable "public_subnet_tag" {
+    type = string
+    default = "Public Subnet"
+}
+
+
+variable "private_subnet_tag" {
+    type = string
+    default = "Private Subnet"
+}
+variable "destination_cidr_block" {
+  type = string
+  default = "0.0.0.0/0"
+}
