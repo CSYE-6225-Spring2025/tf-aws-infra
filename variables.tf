@@ -63,3 +63,9 @@ variable "destination_cidr_block" {
   type    = string
   default = "0.0.0.0/0"
 }
+
+variable "private_route_table_tag" {
+  type    = string
+  default = "AWS Private route Table"
+}
+
