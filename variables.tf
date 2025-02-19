@@ -59,3 +59,7 @@ variable "private_subnet_tag" {
     type = string
     default = "Private Subnet"
 }
+variable "destination_cidr_block" {
+  type = string
+  default = "0.0.0.0/0"
+}
