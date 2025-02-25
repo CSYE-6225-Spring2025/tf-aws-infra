@@ -83,10 +83,9 @@ variable "private_route_table_tag" {
 variable "app_port" {
   type    = number
   default = 8080
-
 }
 
-variable "aws_security_group_tag"
+variable "aws_security_group_tag" {
   type    = string
   default = "application_security_group"
 }
