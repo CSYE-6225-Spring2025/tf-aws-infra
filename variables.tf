@@ -106,10 +106,10 @@ variable "web_app_instance_tag" {
 }
 
 variable "application-security-group" {
-  type = string
+  type    = string
   default = "application-security-group"
 }
 variable "aws_security_group_description" {
-  type = string
+  type    = string
   default = "Security group decription"
 }
