@@ -1,8 +1,8 @@
-variable "region" {
-  type        = string
-  description = "The AWS region where resources will be created."
-  default     = "us-east-1"
-}
+# variable "region" {
+#   type        = string
+#   description = "The AWS region where resources will be created."
+#   default     = "us-east-1"
+# }
 
 variable "profile" {
   type        = string
@@ -83,7 +83,7 @@ variable "private_route_table_tag" {
 variable "app_port" {
   type    = number
   default = 8080
-
+}
 
 variable "aws_security_group_tag" {
   type    = string
