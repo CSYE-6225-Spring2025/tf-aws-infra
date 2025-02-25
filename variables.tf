@@ -80,3 +80,36 @@ variable "private_route_table_tag" {
   default = "AWS Private route Table"
 }
 
+variable "app_port" {
+  type    = number
+  default = 8080
+}
+
+variable "aws_security_group_tag" {
+  type    = string
+  default = "application_security_group"
+}
+
+variable "custom_ami" {
+  type    = string
+  default = "value"
+}
+
+variable "instance_type" {
+  type    = string
+  default = "t2.micro"
+}
+
+variable "web_app_instance_tag" {
+  type    = string
+  default = "web_app_instance"
+}
+
+variable "application-security-group" {
+  type = string
+  default = "application-security-group"
+}
+variable "aws_security_group_description" {
+  type = string
+  default = "Security group decription"
+}
