@@ -72,7 +72,7 @@ resource "aws_route_table" "private" {
   }
 }
 
-resource "aws_route_table_association" "private" {
+resource "aws_route_table_association "private" {
   count          = length(var.availabilityzones_names)
   subnet_id      = aws_subnet.private[count.index].id
   route_table_id = aws_route_table.private.id
@@ -102,9 +102,7 @@ resource "aws_security_group" "application_sg" {
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
-    cidr_blocks       = ["0.0.0.0/0"]
-
-
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
