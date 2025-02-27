@@ -113,3 +113,13 @@ variable "aws_security_group_description" {
   type    = string
   default = "Security group decription"
 }
+
+variable "volume_size" {
+  type    = number
+  default = 25
+}
+
+variable "volume_type" {
+  type    = string
+  default = "gp2"
+}
