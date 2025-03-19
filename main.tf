@@ -127,7 +127,7 @@ resource "aws_security_group" "application_security_group" {
 
 
 resource "aws_s3_bucket" "s3bucket" {
-  bucket        = "s3-bucket-${uuid()}"
+  bucket        = uuid()
   force_destroy = true
 }
 
