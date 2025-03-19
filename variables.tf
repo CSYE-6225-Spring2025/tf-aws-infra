@@ -105,7 +105,7 @@ variable "web_app_instance_tag" {
   default = "web_app_instance"
 }
 
-variable "application-security-group" {
+variable "application_security_group" {
   type    = string
   default = "application-security-group"
 }
@@ -122,4 +122,47 @@ variable "volume_size" {
 variable "volume_type" {
   type    = string
   default = "gp2"
+}
+
+variable "db_port" {
+  type    = number
+  default = 3306
+}
+
+variable "db_password" {
+  type    = string
+  default = "value"
+}
+variable "PACKER_DB_USERNAME" {
+  type    = string
+  default = "username"
+}
+
+variable "PACKER_DB_PASSWORD" {
+  type    = string
+  default = "passwrod"
+}
+
+variable "aws_access_key" {
+  type    = string
+  default = "value"
+}
+
+variable "aws_secret_key" {
+  type    = string
+  default = "value"
+}
+
+variable "aws_region" {
+  type    = string
+  default = "us-east-1"
+}
+variable "db_username" {
+  type    = string
+  default = "root"
+}
+
+variable "db_name" {
+  type    = string
+  default = "csye6225"
 }
