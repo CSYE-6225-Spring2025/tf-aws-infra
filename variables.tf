@@ -166,3 +166,13 @@ variable "db_name" {
   type    = string
   default = "csye6225"
 }
+
+variable "app_user" {
+  type    = string
+  default = "app_user"
+}
+
+variable "app_grp" {
+  type    = string
+  default = "value"
+}

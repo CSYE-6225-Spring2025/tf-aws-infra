@@ -249,33 +249,33 @@ resource "aws_instance" "web_app" {
   subnet_id                   = aws_subnet.public[0].id
   vpc_security_group_ids      = [aws_security_group.application_security_group.id]
   associate_public_ip_address = true
-  user_data                   = <<EOF
+  iam_instance_profile        = aws_iam_instance_profile.ec2_instance_profile.name
+
+  user_data = <<-EOF
 #!/bin/bash
+exec > >(tee -a /var/log/user_data.log | logger -t user-data -s 2>/dev/console) 2>&1
+set -e
 sudo mkdir -p /etc/myapp
-echo "DB_HOST=${aws_db_instance.mysql_db.endpoint}" | sudo tee -a /etc/myapp/myapp.env
-echo "DB_NAME=${aws_db_instance.mysql_db.db_name}" | sudo tee -a /etc/myapp/myapp.env
-echo "DB_USER=${aws_db_instance.mysql_db.username}" | sudo tee -a /etc/myapp/myapp.env
-echo "SPRING_DATASOURCE_USERNAME=${aws_db_instance.mysql_db.username}" | sudo tee -a /etc/myapp/myapp.env
-echo "SPRING_DATASOURCE_PASSWORD=${var.db_password}" | sudo tee -a /etc/myapp/myapp.env
-echo "DB_PASSWORD=${var.db_password}" | sudo tee -a /etc/myapp/myapp.env
-echo "AWS_ACCESS_KEY=${var.aws_access_key}" | sudo tee -a /etc/myapp/myapp.env
-echo "AWS_SECRET_KEY=${var.aws_secret_key}" | sudo tee -a /etc/myapp/myapp.env
-echo "AWS_REGION=${var.aws_region}" | sudo tee -a /etc/myapp/myapp.env
-echo "AWS_S3_BUCKET_NAME=${aws_s3_bucket.s3bucket.bucket}" | sudo tee -a /etc/myapp/myapp.env
+cat <<EOT | sudo tee /etc/myapp/myapp.env
+DB_HOST=${aws_db_instance.mysql_db.endpoint}
+DB_NAME=${aws_db_instance.mysql_db.db_name}
+DB_USER=${aws_db_instance.mysql_db.username}
+DB_PASSWORD=${var.db_password}
+SPRING_DATASOURCE_USERNAME=${aws_db_instance.mysql_db.username}
+SPRING_DATASOURCE_PASSWORD=${var.db_password}
+AWS_REGION=${var.aws_region}
+AWS_S3_BUCKET_NAME=${aws_s3_bucket.s3bucket.bucket}
+EOT
 sudo chmod 600 /etc/myapp/myapp.env
-cd /opt
+/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
+-a fetch-config \
+-m ec2 \
+-c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json \
+-s
+sudo systemctl restart myapp.service || true
 EOF
 
-
-  root_block_device {
-    volume_size           = var.volume_size
-    volume_type           = var.volume_type
-    delete_on_termination = true
-  }
-
-  disable_api_termination = false
-
   tags = {
-    Name = var.web_app_instance_tag
+    Name = "web_app_instance"
   }
 }
