@@ -240,7 +240,7 @@ resource "aws_launch_template" "web_app_lt" {
 
   network_interfaces {
     security_groups             = [aws_security_group.application_security_group.id]
-    associate_public_ip_address = false
+    associate_public_ip_address = true
   }
 
   user_data = base64encode(<<-EOF
