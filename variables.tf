@@ -176,3 +176,11 @@ variable "app_grp" {
   type    = string
   default = "value"
 }
+variable "zone_id" {
+  type    = string
+  default = "default"
+}
+variable "domain_name" {
+  type    = string
+  default = "praveenkumarvijayakumar.me"
+}
