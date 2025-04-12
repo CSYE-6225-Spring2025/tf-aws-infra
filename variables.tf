@@ -184,3 +184,25 @@ variable "domain_name" {
   type    = string
   default = "praveenkumarvijayakumar.me"
 }
+
+variable "db_secret_name" {
+  type    = string
+  default = "my-db-name"
+}
+
+variable "demo_certificate_arn" {
+  type    = string
+  default = "value"
+}
+variable "dev_zone_id" {
+  type    = string
+  default = "value"
+}
+variable "dev_domain_name" {
+  type    = string
+  default = "dev.praveenkumarvijayakumar.me"
+}
+variable "current_zone_id" {
+  type    = string
+  default = "value"
+}
