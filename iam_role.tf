@@ -54,13 +54,13 @@ resource "aws_iam_policy" "kms_access" {
   })
 }
 
-# Single policy attachment for KMS
+
 resource "aws_iam_role_policy_attachment" "kms_attach" {
   role       = aws_iam_role.ec2_role.name
   policy_arn = aws_iam_policy.kms_access.arn
 }
 
-# CloudWatch attachment remains the same
+
 resource "aws_iam_role_policy_attachment" "cloudwatch_agent_attach" {
   role       = aws_iam_role.ec2_role.name
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
