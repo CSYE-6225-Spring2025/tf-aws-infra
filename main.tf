@@ -11,6 +11,12 @@ resource "aws_vpc" "main" {
   }
 }
 
+resource "random_password" "db_password" {
+  length           = 16
+  special          = true
+  override_special = "!#$%^&*()-_=+[]{}|;:,.<>?"
+}
+
 
 resource "aws_subnet" "public" {
   count                   = length(var.availabilityzones_names)
@@ -122,7 +128,8 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "s3bucket_encrypti
 
   rule {
     apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
+      sse_algorithm     = "aws:kms"
+      kms_master_key_id = aws_kms_key.s3_kms.key_id
     }
   }
 }
@@ -141,8 +148,6 @@ resource "aws_s3_bucket_lifecycle_configuration" "s3bucket" {
     }
   }
 }
-
-
 
 
 resource "aws_db_parameter_group" "mysql_param_group" {
@@ -205,6 +210,25 @@ resource "aws_security_group" "db_sg" {
   }
 }
 
+resource "aws_secretsmanager_secret" "db_secret" {
+  name        = var.db_secret_name
+  description = "DB credentials"
+  kms_key_id  = aws_kms_key.secrets_kms.key_id
+}
+
+resource "aws_secretsmanager_secret_version" "db_secret_value" {
+  secret_id = aws_secretsmanager_secret.db_secret.id
+  secret_string = jsonencode({
+    DB_USERNAME                = var.db_username
+    DB_PASSWORD                = random_password.db_password.result
+    DB_HOST                    = aws_db_instance.mysql_db.endpoint
+    DB_NAME                    = var.db_name
+    SPRING_DATASOURCE_USERNAME = var.db_username
+    SPRING_DATASOURCE_PASSWORD = random_password.db_password.result
+  })
+}
+
+
 
 resource "aws_db_instance" "mysql_db" {
   identifier             = "csye6225"
@@ -215,9 +239,11 @@ resource "aws_db_instance" "mysql_db" {
   storage_type           = "gp2"
   multi_az               = false
   publicly_accessible    = false
+  storage_encrypted      = true
+  kms_key_id             = aws_kms_key.rds_kms.arn
   db_name                = var.db_name
   username               = var.db_username
-  password               = var.db_password
+  password               = random_password.db_password.result
   vpc_security_group_ids = [aws_security_group.db_sg.id]
   db_subnet_group_name   = aws_db_subnet_group.rds_subnet_group.name
   parameter_group_name   = aws_db_parameter_group.mysql_param_group.name
@@ -230,52 +256,114 @@ resource "aws_db_instance" "mysql_db" {
 }
 
 resource "aws_launch_template" "web_app_lt" {
-  name_prefix   = "webapp-lt-aws"
+  name          = "webapp-lt-aws-v1"
   image_id      = var.custom_ami
   instance_type = var.instance_type
 
   iam_instance_profile {
     name = aws_iam_instance_profile.ec2_instance_profile.name
   }
-
+  lifecycle {
+    create_before_destroy = true
+  }
   network_interfaces {
     security_groups             = [aws_security_group.application_security_group.id]
     associate_public_ip_address = true
   }
 
+  block_device_mappings {
+    device_name = "/dev/xvda"
+
+    ebs {
+      volume_size           = 10
+      encrypted             = true
+      kms_key_id            = aws_kms_key.ec2_kms.arn
+      delete_on_termination = true
+      volume_type           = "gp2"
+    }
+  }
+
+
   user_data = base64encode(<<-EOF
-    #!/bin/bash
-    exec > >(tee -a /var/log/user_data.log | logger -t user-data -s 2>/dev/console) 2>&1
-    set -e
-    sudo mkdir -p /etc/myapp
-    cat <<EOT | sudo tee /etc/myapp/myapp.env
-    DB_HOST=${aws_db_instance.mysql_db.endpoint}
-    DB_NAME=${aws_db_instance.mysql_db.db_name}
-    DB_USER=${aws_db_instance.mysql_db.username}
-    DB_PASSWORD=${var.db_password}
-    SPRING_DATASOURCE_USERNAME=${aws_db_instance.mysql_db.username}
-    SPRING_DATASOURCE_PASSWORD=${var.db_password}
-    AWS_REGION=${var.aws_region}
-    AWS_S3_BUCKET_NAME=${aws_s3_bucket.s3bucket.bucket}
-    EOT
-    sudo chmod 600 /etc/myapp/myapp.env
-    /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
+#!/bin/bash
+exec > >(tee -a /var/log/user_data.log | logger -t user-data -s 2>/dev/console) 2>&1
+set -e
+
+echo "[BOOTSTRAP] Updating packages & installing jq/unzip"
+apt-get update -y
+apt-get install -y jq unzip curl
+
+echo "[BOOTSTRAP] Installing AWS CLI v2 manually"
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
+
+echo "[BOOTSTRAP] Verifying AWS CLI install"
+aws --version || { echo "[ERROR] AWS CLI install failed"; exit 1; }
+
+REGION="${var.aws_region}"
+SECRET_NAME="${var.db_secret_name}"
+
+echo "[INFO] Fetching DB secret from Secrets Manager..."
+SECRET_JSON=$(aws secretsmanager get-secret-value \
+  --region "$REGION" \
+  --secret-id "$SECRET_NAME" \
+  --query SecretString \
+  --output text 2>/tmp/aws_error.log) || {
+    echo "[ERROR] Failed to fetch secret:"
+    cat /tmp/aws_error.log
+    exit 1
+}
+
+echo "[INFO] Creating /etc/myapp directory..."
+mkdir -p /etc/myapp
+
+echo "[INFO] Writing secret to env file..."
+echo "$SECRET_JSON" | jq -r 'to_entries|map("\(.key)=\(.value|tostring)")|.[]' \
+  > /etc/myapp/myapp.env
+
+echo "[INFO] Adding static config to env file..."
+cat <<EOT >> /etc/myapp/myapp.env
+AWS_REGION=$REGION
+AWS_S3_BUCKET_NAME=${aws_s3_bucket.s3bucket.bucket}
+EOT
+
+chmod 600 /etc/myapp/myapp.env
+
+echo "[INFO] Contents of env file:"
+cat /etc/myapp/myapp.env
+
+echo "Installing CloudWatch"
+/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
     -a fetch-config \
     -m ec2 \
     -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json \
     -s
-    sudo systemctl restart myapp.service || true
-  EOF
+    
+echo "[INFO] Restarting app service..."
+systemctl daemon-reexec
+systemctl restart myapp.service || echo "[WARN] myapp.service failed to start"
+EOF
   )
+  depends_on = [
+    aws_kms_key.ec2_kms,
+    aws_iam_instance_profile.ec2_instance_profile,
+    aws_kms_key.rds_kms,
+    aws_kms_key.secrets_kms,
+    aws_kms_key.s3_kms,
+    aws_db_instance.mysql_db
+  ]
+
 }
 
 resource "aws_autoscaling_group" "web_app_asg" {
-  name                = "webapp-autoscaling-group"
-  desired_capacity    = 3
-  max_size            = 5
-  min_size            = 3
-  health_check_type   = "EC2"
-  vpc_zone_identifier = aws_subnet.public[*].id
+  name                      = "webapp-autoscaling-group"
+  desired_capacity          = 3
+  max_size                  = 5
+  min_size                  = 3
+  health_check_type         = "EC2"
+  health_check_grace_period = 600
+  vpc_zone_identifier       = aws_subnet.public[*].id
   launch_template {
     id      = aws_launch_template.web_app_lt.id
     version = "$Latest"
@@ -337,16 +425,16 @@ resource "aws_lb_target_group" "web_app_tg" {
   }
 }
 
-resource "aws_lb_listener" "web_app_http" {
-  load_balancer_arn = aws_lb.web_alb.arn
-  port              = 80
-  protocol          = "HTTP"
+# resource "aws_lb_listener" "web_app_http" {
+#   load_balancer_arn = aws_lb.web_alb.arn
+#   port              = 80
+#   protocol          = "HTTP"
 
-  default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.web_app_tg.arn
-  }
-}
+#   default_action {
+#     type             = "forward"
+#     target_group_arn = aws_lb_target_group.web_app_tg.arn
+#   }
+# }
 resource "aws_security_group" "alb_sg" {
   name        = "alb-security-group"
   description = "Allow HTTP and HTTPS"
@@ -408,9 +496,8 @@ resource "aws_cloudwatch_metric_alarm" "scale_down_alarm" {
   alarm_actions = [aws_autoscaling_policy.scale_down.arn]
 }
 
-
 resource "aws_route53_record" "dev_record" {
-  zone_id = var.zone_id
+  zone_id = var.current_zone_id
   name    = var.domain_name
   type    = "A"
 
@@ -420,3 +507,18 @@ resource "aws_route53_record" "dev_record" {
     evaluate_target_health = true
   }
 }
+
+resource "aws_lb_listener" "web_app_https_demo" {
+  load_balancer_arn = aws_lb.web_alb.arn
+  port              = 443
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-2016-08"
+  certificate_arn   = var.demo_certificate_arn
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.web_app_tg.arn
+  }
+}
+
+
