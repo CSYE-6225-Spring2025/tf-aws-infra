@@ -2,6 +2,9 @@
 
 #### This Repository contains code for Terraform
 
+#### The code for Web application is found in : 
+https://github.com/CSYE-6225-Spring2025/webapp
+
 Clone the Repository to your wokrspace.
 create a .tfvars file to give unput to the variables defined in the code.
 
