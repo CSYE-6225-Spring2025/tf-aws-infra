@@ -11,6 +11,8 @@ https://github.com/CSYE-6225-Spring2025/webapp
 This Terraform configuration provisions a complete AWS infrastructure for a web application with the following components:
 Network Architecture:
 
+
+![description](Gemini_Generated_Image_lqxp20lqxp20lqxp.png)
 1. VPC with configurable CIDR block containing:
 
 Multiple public subnets (with auto-assigned public IPs)
