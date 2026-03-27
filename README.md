@@ -7,6 +7,10 @@ https://github.com/CSYE-6225-Spring2025/webapp
 
 
 
+## Infrastructure Diagram
+
+![AWS Infrastructure Diagram](infra_diagram.png)
+
 #### Infrastructure Summary
 This Terraform configuration provisions a complete AWS infrastructure for a web application with the following components:
 Network Architecture:
